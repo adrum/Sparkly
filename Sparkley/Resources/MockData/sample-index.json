@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "title": "Development Builds",
+  "apps": [
+    {
+      "id": "com.example.demoapp",
+      "name": "Demo App",
+      "icon": null,
+      "platform": "ios",
+      "appcastURL": "file:///Users/austin/Developer/GitHub/Sparkley/Sparkley/Resources/MockData/sample-appcast.xml"
+    },
+    {
+      "id": "com.example.otherapp",
+      "name": "Other App",
+      "icon": null,
+      "platform": "ios",
+      "appcastURL": "file:///Users/austin/Developer/GitHub/Sparkley/Sparkley/Resources/MockData/sample-appcast.xml"
+    }
+  ]
+}

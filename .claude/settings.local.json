@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(/usr/libexec/PlistBuddy:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
