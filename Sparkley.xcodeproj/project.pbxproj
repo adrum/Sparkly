@@ -81,7 +81,7 @@
 		D9A4E0BA2EE49B740075DD55 = {
 			isa = PBXGroup;
 			children = (
-				D9A4E5012EE500010075DD55 /* Configuration */,
+				D9A4E5012EE500010075DD55 /* Sparkley/Configuration */,
 				D9A4E0C52EE49B740075DD55 /* Sparkley */,
 				D9A4E0D32EE49B750075DD55 /* SparkleyTests */,
 				D9A4E0DD2EE49B750075DD55 /* SparkleyUITests */,
@@ -99,12 +99,12 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		D9A4E5012EE500010075DD55 /* Configuration */ = {
+		D9A4E5012EE500010075DD55 /* Sparkley/Configuration */ = {
 			isa = PBXGroup;
 			children = (
 				D9A4E5002EE500000075DD55 /* Base.xcconfig */,
 			);
-			path = "Sparkley/Configuration";
+			path = Sparkley/Configuration;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

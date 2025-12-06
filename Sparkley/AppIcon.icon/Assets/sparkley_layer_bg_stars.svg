@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Background stars layer - subtle stars scattered behind devices -->
+  <g fill="white" opacity="0.35">
+    <!-- Large background star - top center -->
+    <path d="M 512 120 Q 512 170, 530 188 Q 512 206, 512 256 Q 512 206, 494 188 Q 512 170, 512 120 Z"/>
+    <path d="M 444 188 Q 494 188, 512 170 Q 530 188, 580 188 Q 530 188, 512 206 Q 494 188, 444 188 Z"/>
+    
+    <!-- Medium star - left side -->
+    <path d="M 150 400 Q 150 435, 162 447 Q 150 459, 150 494 Q 150 459, 138 447 Q 150 435, 150 400 Z"/>
+    <path d="M 103 447 Q 138 447, 150 435 Q 162 447, 197 447 Q 162 447, 150 459 Q 138 447, 103 447 Z"/>
+    
+    <!-- Medium star - right side -->
+    <path d="M 874 420 Q 874 455, 886 467 Q 874 479, 874 514 Q 874 479, 862 467 Q 874 455, 874 420 Z"/>
+    <path d="M 827 467 Q 862 467, 874 455 Q 886 467, 921 467 Q 886 467, 874 479 Q 862 467, 827 467 Z"/>
+    
+    <!-- Small star - bottom center-left -->
+    <path d="M 380 850 Q 380 875, 388 883 Q 380 891, 380 916 Q 380 891, 372 883 Q 380 875, 380 850 Z"/>
+    <path d="M 347 883 Q 372 883, 380 875 Q 388 883, 413 883 Q 388 883, 380 891 Q 372 883, 347 883 Z"/>
+    
+    <!-- Small star - bottom center-right -->
+    <path d="M 644 870 Q 644 895, 652 903 Q 644 911, 644 936 Q 644 911, 636 903 Q 644 895, 644 870 Z"/>
+    <path d="M 611 903 Q 636 903, 644 895 Q 652 903, 677 903 Q 652 903, 644 911 Q 636 903, 611 903 Z"/>
+    
+    <!-- Tiny star - top left -->
+    <path d="M 200 220 Q 200 238, 206 244 Q 200 250, 200 268 Q 200 250, 194 244 Q 200 238, 200 220 Z"/>
+    <path d="M 176 244 Q 194 244, 200 238 Q 206 244, 224 244 Q 206 244, 200 250 Q 194 244, 176 244 Z"/>
+    
+    <!-- Tiny star - top right -->
+    <path d="M 830 200 Q 830 218, 836 224 Q 830 230, 830 248 Q 830 230, 824 224 Q 830 218, 830 200 Z"/>
+    <path d="M 806 224 Q 824 224, 830 218 Q 836 224, 854 224 Q 836 224, 830 230 Q 824 224, 806 224 Z"/>
+    
+    <!-- Tiny star - bottom left -->
+    <path d="M 180 750 Q 180 765, 185 770 Q 180 775, 180 790 Q 180 775, 175 770 Q 180 765, 180 750 Z"/>
+    <path d="M 160 770 Q 175 770, 180 765 Q 185 770, 200 770 Q 185 770, 180 775 Q 175 770, 160 770 Z"/>
+    
+    <!-- Tiny star - bottom right -->
+    <path d="M 850 780 Q 850 795, 855 800 Q 850 805, 850 820 Q 850 805, 845 800 Q 850 795, 850 780 Z"/>
+    <path d="M 830 800 Q 845 800, 850 795 Q 855 800, 870 800 Q 855 800, 850 805 Q 845 800, 830 800 Z"/>
+  </g>
+  
+  <!-- Tiny dots scattered -->
+  <circle cx="120" cy="300" r="4" fill="white" opacity="0.3"/>
+  <circle cx="900" cy="320" r="3" fill="white" opacity="0.25"/>
+  <circle cx="280" cy="150" r="3" fill="white" opacity="0.25"/>
+  <circle cx="750" cy="130" r="3" fill="white" opacity="0.25"/>
+  <circle cx="100" cy="600" r="3" fill="white" opacity="0.25"/>
+  <circle cx="920" cy="650" r="3" fill="white" opacity="0.25"/>
+</svg>

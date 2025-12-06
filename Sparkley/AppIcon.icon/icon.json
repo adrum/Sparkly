@@ -2,24 +2,46 @@
   "fill" : "automatic",
   "groups" : [
     {
+      "blur-material" : null,
       "layers" : [
         {
           "image-name" : "sparkley_layer_sparkle.svg",
           "name" : "sparkley_layer_sparkle"
         },
         {
-          "image-name" : "sparkley_layer_devices.svg",
-          "name" : "sparkley_layer_devices"
+          "image-name" : "sparkley_layer_devices 3.svg",
+          "name" : "sparkley_layer_devices 3",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              13.968353975565577,
+              -4.01916614618416
+            ]
+          }
         },
         {
-          "image-name" : "sparkley_layer_background.svg",
-          "name" : "sparkley_layer_background"
+          "hidden" : true,
+          "image-name" : "sparkley_layer_bg_stars.svg",
+          "name" : "sparkley_layer_bg_stars",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              44.66306341845221,
+              0
+            ]
+          }
+        },
+        {
+          "image-name" : "sparkley_layer_background 2.svg",
+          "name" : "sparkley_layer_background 2"
         }
       ],
+      "lighting" : "individual",
       "shadow" : {
-        "kind" : "neutral",
+        "kind" : "layer-color",
         "opacity" : 0.5
       },
+      "specular" : true,
       "translucency" : {
         "enabled" : true,
         "value" : 0.5
