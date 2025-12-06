@@ -5,8 +5,10 @@ import Observation
 final class DeviceListViewModel: @unchecked Sendable {
     private(set) var simulators: [SimulatorDevice] = []
     private(set) var emulators: [EmulatorDevice] = []
+    private(set) var availableAVDs: [AVDInfo] = []
     private(set) var isLoading = false
     private(set) var errorMessage: String?
+    private(set) var launchingAVDs: Set<String> = []
 
     var selectedDevice: AnyDevice?
 
@@ -44,19 +46,27 @@ final class DeviceListViewModel: @unchecked Sendable {
         self.avdManager = avdManager
     }
 
+    /// Available AVDs that are not currently running
+    var launchableAVDs: [AVDInfo] {
+        let runningAVDNames = Set(emulators.compactMap { $0.avdName })
+        return availableAVDs.filter { !runningAVDNames.contains($0.name) }
+    }
+
     @MainActor
     func refresh() async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
 
-        // Fetch iOS simulators and Android emulators in parallel
+        // Fetch iOS simulators, Android emulators, and available AVDs in parallel
         async let simulatorsTask = fetchSimulators()
         async let emulatorsTask = fetchEmulators()
+        async let avdsTask = fetchAvailableAVDs()
 
-        let (sims, emus) = await (simulatorsTask, emulatorsTask)
+        let (sims, emus, avds) = await (simulatorsTask, emulatorsTask, avdsTask)
         simulators = sims
         emulators = emus
+        availableAVDs = avds
 
         // Auto-select first ready device if none selected
         if selectedDevice == nil {
@@ -90,6 +100,17 @@ final class DeviceListViewModel: @unchecked Sendable {
             return try await adbService.listDevices()
         } catch {
             // Don't show error for Android - it's optional
+            return []
+        }
+    }
+
+    private func fetchAvailableAVDs() async -> [AVDInfo] {
+        guard await avdManager.isAvailable() else { return [] }
+
+        do {
+            return try await avdManager.listAVDs()
+        } catch {
+            // Don't show error for AVDs - it's optional
             return []
         }
     }
@@ -139,12 +160,54 @@ final class DeviceListViewModel: @unchecked Sendable {
     }
 
     @MainActor
-    func launchAVD(_ avdName: String) async {
+    func launchAVD(_ avdName: String, coldBoot: Bool = false) async {
+        launchingAVDs.insert(avdName)
+        defer { launchingAVDs.remove(avdName) }
+
         do {
-            try await avdManager.launchAVD(name: avdName)
+            try await avdManager.launchAVD(name: avdName, coldBoot: coldBoot)
             // Wait a bit for emulator to start, then refresh
             try? await Task.sleep(for: .seconds(3))
             await refresh()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func isLaunchingAVD(_ name: String) -> Bool {
+        launchingAVDs.contains(name)
+    }
+
+    // MARK: - App Management
+
+    func listInstalledApps(on device: AnyDevice) async -> [InstalledApp] {
+        switch device {
+        case .simulator(let sim):
+            guard sim.isBooted else { return [] }
+            do {
+                return try await simctlService.listInstalledApps(udid: sim.udid)
+            } catch {
+                return []
+            }
+        case .emulator(let emu):
+            guard emu.isOnline else { return [] }
+            do {
+                return try await adbService.listInstalledApps(serial: emu.serial)
+            } catch {
+                return []
+            }
+        }
+    }
+
+    @MainActor
+    func launchApp(_ app: InstalledApp, on device: AnyDevice) async {
+        do {
+            switch device {
+            case .simulator(let sim):
+                try await simctlService.launch(udid: sim.udid, bundleID: app.bundleID)
+            case .emulator(let emu):
+                try await adbService.launch(serial: emu.serial, packageName: app.bundleID)
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

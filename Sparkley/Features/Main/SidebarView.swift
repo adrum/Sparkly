@@ -31,6 +31,16 @@ struct SidebarView: View {
         return result
     }
 
+    private var filteredAVDs: [AVDInfo] {
+        let avds = deviceListViewModel.launchableAVDs
+        if sidebarSearchText.isEmpty {
+            return avds
+        }
+        return avds.filter {
+            $0.displayName.localizedCaseInsensitiveContains(sidebarSearchText)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             searchField
@@ -38,6 +48,10 @@ struct SidebarView: View {
             List(selection: $selection) {
                 Section(isExpanded: $isDevicesSectionExpanded) {
                     devicesSection
+
+                    if !filteredAVDs.isEmpty {
+                        availableAVDsSection
+                    }
                 } header: {
                     Text("Devices")
                 }
@@ -141,6 +155,34 @@ struct SidebarView: View {
         Button("Copy Serial") {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(device.serial, forType: .string)
+        }
+    }
+
+    @ViewBuilder
+    private var availableAVDsSection: some View {
+        Text("Available AVDs")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 8)
+
+        ForEach(filteredAVDs) { avd in
+            AVDRow(
+                avd: avd,
+                isLaunching: deviceListViewModel.isLaunchingAVD(avd.name)
+            ) {
+                Task { await deviceListViewModel.launchAVD(avd.name) }
+            }
+            .tag(Optional<SidebarSelection>.none)
+            .contextMenu {
+                Button("Launch") {
+                    Task { await deviceListViewModel.launchAVD(avd.name) }
+                }
+
+                Button("Launch (Cold Boot)") {
+                    Task { await deviceListViewModel.launchAVD(avd.name, coldBoot: true) }
+                }
+            }
         }
     }
 
@@ -297,6 +339,46 @@ struct AppRow: View {
                 }
                 .foregroundStyle(.secondary)
             }
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+struct AVDRow: View {
+    let avd: AVDInfo
+    let isLaunching: Bool
+    let onLaunch: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "play.rectangle.fill")
+                .foregroundStyle(.secondary)
+                .frame(width: 20)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(avd.displayName)
+                    .lineLimit(1)
+
+                Text(isLaunching ? "Launching..." : "Not running")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Button {
+                onLaunch()
+            } label: {
+                if isLaunching {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Image(systemName: "play.fill")
+                        .font(.caption)
+                }
+            }
+            .buttonStyle(.borderless)
+            .disabled(isLaunching)
         }
         .padding(.vertical, 2)
     }
