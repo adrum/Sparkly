@@ -126,4 +126,82 @@ actor SimctlService {
         let devices = try await listDevices()
         return devices.filter { $0.isBooted }
     }
+
+    func listInstalledApps(udid: String) async throws -> [InstalledApp] {
+        let data = try await shell("xcrun", "simctl", "listapps", udid)
+        guard let output = String(data: data, encoding: .utf8) else {
+            return []
+        }
+        return parseInstalledApps(output)
+    }
+
+    private func parseInstalledApps(_ output: String) -> [InstalledApp] {
+        var apps: [InstalledApp] = []
+
+        // The output is a plist-style format, parse bundle IDs and names
+        let lines = output.components(separatedBy: .newlines)
+        var currentBundleID: String?
+        var currentName: String?
+
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+            if trimmed.contains("CFBundleIdentifier") {
+                // Next line should have the value
+                if let nextIndex = lines.firstIndex(where: { $0.contains(trimmed) }),
+                   nextIndex + 1 < lines.count {
+                    let valueLine = lines[nextIndex + 1]
+                    if let start = valueLine.range(of: "<string>"),
+                       let end = valueLine.range(of: "</string>") {
+                        currentBundleID = String(valueLine[start.upperBound..<end.lowerBound])
+                    }
+                }
+            }
+
+            if trimmed.hasPrefix("<key>CFBundleIdentifier</key>") {
+                continue
+            }
+
+            // Look for pattern: CFBundleIdentifier = "com.example.app";
+            if trimmed.contains("CFBundleIdentifier") && trimmed.contains("=") {
+                let parts = trimmed.components(separatedBy: "=")
+                if parts.count >= 2 {
+                    var value = parts[1].trimmingCharacters(in: .whitespaces)
+                    value = value.trimmingCharacters(in: CharacterSet(charactersIn: "\";"))
+                    value = value.replacingOccurrences(of: "\"", with: "")
+                    if !value.isEmpty {
+                        currentBundleID = value
+                    }
+                }
+            }
+
+            if trimmed.contains("CFBundleDisplayName") || trimmed.contains("CFBundleName") {
+                let parts = trimmed.components(separatedBy: "=")
+                if parts.count >= 2 {
+                    var value = parts[1].trimmingCharacters(in: .whitespaces)
+                    value = value.trimmingCharacters(in: CharacterSet(charactersIn: "\";"))
+                    value = value.replacingOccurrences(of: "\"", with: "")
+                    if !value.isEmpty && currentName == nil {
+                        currentName = value
+                    }
+                }
+            }
+
+            // When we hit a closing brace, save the app if we have a bundle ID
+            if trimmed == "}" || trimmed == "}," {
+                if let bundleID = currentBundleID, !bundleID.hasPrefix("com.apple.") {
+                    let app = InstalledApp(
+                        bundleID: bundleID,
+                        name: currentName ?? bundleID,
+                        platform: .ios
+                    )
+                    apps.append(app)
+                }
+                currentBundleID = nil
+                currentName = nil
+            }
+        }
+
+        return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
 }

@@ -151,6 +151,36 @@ actor ADBService {
     func getAPILevel(serial: String) async throws -> String? {
         try await getDeviceProperty(serial: serial, property: "ro.build.version.sdk")
     }
+
+    func listInstalledApps(serial: String) async throws -> [InstalledApp] {
+        let adb = try getADBPath()
+        let data = try await shell(adb, "-s", serial, "shell", "pm", "list", "packages", "-3")
+
+        guard let output = String(data: data, encoding: .utf8) else {
+            return []
+        }
+
+        return parsePackageList(output)
+    }
+
+    private func parsePackageList(_ output: String) -> [InstalledApp] {
+        // Output format: package:com.example.app
+        let lines = output.components(separatedBy: .newlines)
+
+        return lines.compactMap { line -> InstalledApp? in
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.hasPrefix("package:") else { return nil }
+
+            let packageName = String(trimmed.dropFirst("package:".count))
+            guard !packageName.isEmpty else { return nil }
+
+            return InstalledApp(
+                bundleID: packageName,
+                name: packageName.components(separatedBy: ".").last ?? packageName,
+                platform: .android
+            )
+        }.sorted { $0.bundleID.localizedCaseInsensitiveCompare($1.bundleID) == .orderedAscending }
+    }
 }
 
 private extension String {
