@@ -65,7 +65,7 @@ final class BuildListViewModel: @unchecked Sendable {
         defer { isLoading = false }
 
         do {
-            let index = try await indexService.fetchIndex()
+            let index = try await indexService.fetchAllIndexes()
             let appsWithBuilds = try await indexService.fetchAllAppcasts(for: index)
             apps = appsWithBuilds
         } catch {

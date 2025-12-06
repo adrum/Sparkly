@@ -2,7 +2,7 @@ import Foundation
 
 actor AppIndexService {
     private let session: URLSession
-    private var indexURL: URL?
+    private var indexURLs: [URL] = []
     private var cachedIndex: AppIndex?
     private let parser = AppcastParser()
 
@@ -10,26 +10,75 @@ actor AppIndexService {
         self.session = session
     }
 
+    /// Configure with a single index URL (legacy support)
     func configure(indexURL: URL) {
-        self.indexURL = indexURL
+        self.indexURLs = [indexURL]
+        self.cachedIndex = nil
+    }
+
+    /// Configure with multiple index URLs
+    func configure(indexURLs: [URL]) {
+        self.indexURLs = indexURLs
         self.cachedIndex = nil
     }
 
     var configuredIndexURL: URL? {
-        indexURL
+        indexURLs.first
     }
 
+    var configuredIndexURLs: [URL] {
+        indexURLs
+    }
+
+    /// Fetch a single index (uses first configured URL for legacy compatibility)
     func fetchIndex() async throws -> AppIndex {
-        guard let indexURL else {
+        guard let indexURL = indexURLs.first else {
             throw SparkleyError.noIndexConfigured
         }
 
+        return try await fetchIndex(from: indexURL)
+    }
+
+    /// Fetch and merge all configured indexes
+    func fetchAllIndexes() async throws -> AppIndex {
+        guard !indexURLs.isEmpty else {
+            throw SparkleyError.noIndexConfigured
+        }
+
+        // Fetch all indexes in parallel
+        let indexes = await withTaskGroup(of: AppIndex?.self) { group in
+            for url in indexURLs {
+                group.addTask {
+                    try? await self.fetchIndex(from: url)
+                }
+            }
+
+            var results: [AppIndex] = []
+            for await index in group {
+                if let index {
+                    results.append(index)
+                }
+            }
+            return results
+        }
+
+        // Merge all indexes into one
+        let mergedApps = indexes.flatMap { $0.apps }
+        let mergedIndex = AppIndex(
+            version: indexes.first?.version ?? 1,
+            title: indexes.count == 1 ? indexes.first?.title : "Combined Index",
+            apps: mergedApps
+        )
+
+        cachedIndex = mergedIndex
+        return mergedIndex
+    }
+
+    private func fetchIndex(from url: URL) async throws -> AppIndex {
         do {
-            let data = try await fetchData(from: indexURL)
+            let data = try await fetchData(from: url)
             let decoder = JSONDecoder()
-            let index = try decoder.decode(AppIndex.self, from: data)
-            cachedIndex = index
-            return index
+            return try decoder.decode(AppIndex.self, from: data)
         } catch let error as DecodingError {
             throw SparkleyError.indexDecodingFailed(underlying: error)
         } catch let error as SparkleyError {
