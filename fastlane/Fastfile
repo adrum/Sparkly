@@ -1,0 +1,187 @@
+default_platform(:mac)
+
+platform :mac do
+  desc "Build and sign the macOS app"
+  lane :build do
+    # Clean build folder
+    sh("rm -rf ../build")
+
+    # Build the app
+    build_mac_app(
+      scheme: "Sparkley",
+      project: "Sparkley.xcodeproj",
+      output_directory: "./build",
+      output_name: "Sparkley.app",
+      export_method: "developer-id",
+      skip_package_pkg: true,
+      clean: true,
+      configuration: "Release"
+    )
+  end
+
+  desc "Build without signing (for testing)"
+  lane :build_unsigned do
+    sh("rm -rf ../build")
+
+    # Build without signing
+    xcodebuild(
+      scheme: "Sparkley",
+      project: "Sparkley.xcodeproj",
+      configuration: "Release",
+      derivedDataPath: "./build/DerivedData",
+      xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -destination 'generic/platform=macOS'"
+    )
+
+    # Copy the app to build directory
+    sh("mkdir -p ../build")
+    sh("cp -R ../build/DerivedData/Build/Products/Release/Sparkley.app ../build/")
+  end
+
+  desc "Create a zip archive of the app"
+  lane :archive do |options|
+    version = options[:version] || get_version_number(xcodeproj: "Sparkley.xcodeproj", target: "Sparkley")
+    build_number = options[:build_number] || get_build_number(xcodeproj: "Sparkley.xcodeproj")
+
+    app_path = "./build/Sparkley.app"
+    zip_name = "Sparkley-#{version}.zip"
+    zip_path = "./build/#{zip_name}"
+
+    # Create zip
+    sh("cd ../build && zip -r -y '#{zip_name}' 'Sparkley.app'")
+
+    UI.success("Created archive: #{zip_path}")
+    zip_path
+  end
+
+  desc "Build, archive, and release to GitHub"
+  lane :release do |options|
+    ensure_env_vars(
+      env_vars: ["GITHUB_TOKEN"]
+    )
+
+    # Get version info
+    version = get_version_number(xcodeproj: "Sparkley.xcodeproj", target: "Sparkley")
+    build_number = get_build_number(xcodeproj: "Sparkley.xcodeproj")
+
+    tag_name = "v#{version}"
+    release_name = "Sparkley #{version}"
+
+    UI.message("Building version #{version} (#{build_number})")
+
+    # Build the app
+    build_unsigned
+
+    # Create archive
+    zip_path = archive(version: version, build_number: build_number)
+
+    # Check if release already exists
+    existing_release = get_github_release(
+      url: "adrum/Sparkley",
+      version: tag_name,
+      api_bearer: ENV["GITHUB_TOKEN"]
+    ) rescue nil
+
+    if existing_release
+      UI.important("Release #{tag_name} already exists. Updating...")
+
+      # Upload asset to existing release
+      upload_url = existing_release["upload_url"].gsub("{?name,label}", "")
+
+      sh("curl -X POST " \
+         "-H 'Authorization: Bearer #{ENV["GITHUB_TOKEN"]}' " \
+         "-H 'Content-Type: application/zip' " \
+         "--data-binary '@../build/Sparkley-#{version}.zip' " \
+         "'#{upload_url}?name=Sparkley-#{version}.zip'")
+    else
+      # Create new release
+      set_github_release(
+        repository_name: "adrum/Sparkley",
+        api_bearer: ENV["GITHUB_TOKEN"],
+        name: release_name,
+        tag_name: tag_name,
+        description: release_notes(version: version),
+        commitish: "main",
+        upload_assets: ["build/Sparkley-#{version}.zip"],
+        is_draft: false,
+        is_prerelease: options[:prerelease] || false
+      )
+    end
+
+    UI.success("Released #{release_name} to GitHub!")
+  end
+
+  desc "Create a draft release on GitHub"
+  lane :release_draft do |options|
+    ensure_env_vars(
+      env_vars: ["GITHUB_TOKEN"]
+    )
+
+    version = get_version_number(xcodeproj: "Sparkley.xcodeproj", target: "Sparkley")
+    tag_name = "v#{version}"
+    release_name = "Sparkley #{version}"
+
+    UI.message("Building version #{version}")
+
+    build_unsigned
+    zip_path = archive(version: version)
+
+    set_github_release(
+      repository_name: "adrum/Sparkley",
+      api_bearer: ENV["GITHUB_TOKEN"],
+      name: release_name,
+      tag_name: tag_name,
+      description: release_notes(version: version),
+      commitish: "main",
+      upload_assets: ["build/Sparkley-#{version}.zip"],
+      is_draft: true,
+      is_prerelease: false
+    )
+
+    UI.success("Created draft release #{release_name}")
+  end
+
+  desc "Bump version number"
+  lane :bump do |options|
+    bump_type = options[:type] || "patch"
+
+    increment_version_number(
+      xcodeproj: "Sparkley.xcodeproj",
+      bump_type: bump_type
+    )
+
+    increment_build_number(xcodeproj: "Sparkley.xcodeproj")
+
+    version = get_version_number(xcodeproj: "Sparkley.xcodeproj", target: "Sparkley")
+    build_number = get_build_number(xcodeproj: "Sparkley.xcodeproj")
+
+    UI.success("Bumped to version #{version} (#{build_number})")
+  end
+
+  # Helper to generate release notes
+  def release_notes(version:)
+    changelog = File.read("../CHANGELOG.md") rescue nil
+
+    if changelog
+      # Try to extract notes for this version from CHANGELOG
+      version_section = changelog[/## \[?#{Regexp.escape(version)}\]?.*?\n(.*?)(?=\n## |\z)/m, 1]
+      return version_section.strip if version_section && !version_section.strip.empty?
+    end
+
+    # Default release notes
+    <<~NOTES
+      ## Sparkley #{version}
+
+      ### Installation
+
+      1. Download `Sparkley-#{version}.zip`
+      2. Unzip and drag `Sparkley.app` to your Applications folder
+      3. Open Sparkley and add your team's index URL in Settings
+
+      ### Requirements
+
+      - macOS 14.0 (Sonoma) or later
+      - Xcode (for iOS Simulator support)
+      - Android SDK (optional, for Android Emulator support)
+    NOTES
+  end
+end

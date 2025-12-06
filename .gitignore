@@ -18,9 +18,9 @@ fastlane/screenshots/**/*.png
 fastlane/test_output/
 
 # Environment files (secrets)
-.env
-.env.local
-.env.*.local
+.env*
+*.local*
+!.env.example
 
 # Ruby
 .bundle/
