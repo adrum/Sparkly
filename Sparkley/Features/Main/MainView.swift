@@ -49,8 +49,8 @@ struct MainView: View {
             // Sync selection state to view models
             if let selection = newSelection {
                 switch selection {
-                case .device(let device):
-                    deviceListViewModel.selectedDevice = device
+                case .device(let anyDevice):
+                    deviceListViewModel.selectedDevice = anyDevice
                     buildListViewModel.selectedApp = nil
                 case .app(let app):
                     buildListViewModel.selectedApp = app
@@ -65,11 +65,19 @@ struct MainView: View {
     @ViewBuilder
     private var detailContent: some View {
         switch sidebarSelection {
-        case .device(let device):
-            DeviceDetailView(
-                device: device,
-                viewModel: deviceListViewModel
-            )
+        case .device(let anyDevice):
+            switch anyDevice {
+            case .simulator(let device):
+                SimulatorDetailView(
+                    device: device,
+                    viewModel: deviceListViewModel
+                )
+            case .emulator(let device):
+                EmulatorDetailView(
+                    device: device,
+                    viewModel: deviceListViewModel
+                )
+            }
         case .app:
             BuildListView(
                 viewModel: buildListViewModel,
@@ -121,7 +129,7 @@ struct MainView: View {
         await deviceListViewModel.refresh()
 
         // Auto-select first device if none selected
-        if sidebarSelection == nil, let firstDevice = deviceListViewModel.devices.first {
+        if sidebarSelection == nil, let firstDevice = deviceListViewModel.allDevices.first {
             sidebarSelection = .device(firstDevice)
         }
 

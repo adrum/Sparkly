@@ -5,7 +5,7 @@ struct BuildRowView: View {
     let app: AppEntry
     let isCached: Bool
     let downloadInfo: DownloadInfo?
-    let selectedDevice: SimulatorDevice?
+    let selectedDevice: AnyDevice?
     let onInstall: () -> Void
     let onCancel: () -> Void
 
@@ -91,8 +91,17 @@ struct BuildRowView: View {
         } else {
             Menu {
                 if let device = selectedDevice {
-                    Button("Install on \(device.name)") {
-                        onInstall()
+                    // Only show install option if platform matches
+                    let platformMatches = (app.platform == .ios && device.simulator != nil) ||
+                                         (app.platform == .android && device.emulator != nil)
+
+                    if platformMatches {
+                        Button("Install on \(device.displayName)") {
+                            onInstall()
+                        }
+                    } else {
+                        Text("Select a \(app.platform.displayName) device")
+                            .foregroundStyle(.secondary)
                     }
                 } else {
                     Text("No device selected")

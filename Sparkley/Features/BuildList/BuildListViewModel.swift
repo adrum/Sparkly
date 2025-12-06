@@ -16,7 +16,9 @@ final class BuildListViewModel: @unchecked Sendable {
     let downloadManager: DownloadManager
     private let cache: BuildCache
     private let simctlService: SimctlService
-    private let installer: SimulatorInstaller
+    private let adbService: ADBService
+    private let simulatorInstaller: SimulatorInstaller
+    private let emulatorInstaller: EmulatorInstaller
 
     var filteredApps: [AppWithBuilds] {
         var result = apps
@@ -44,13 +46,16 @@ final class BuildListViewModel: @unchecked Sendable {
         indexService: AppIndexService,
         downloadManager: DownloadManager,
         cache: BuildCache,
-        simctlService: SimctlService
+        simctlService: SimctlService,
+        adbService: ADBService = ADBService()
     ) {
         self.indexService = indexService
         self.downloadManager = downloadManager
         self.cache = cache
         self.simctlService = simctlService
-        self.installer = SimulatorInstaller(simctlService: simctlService)
+        self.adbService = adbService
+        self.simulatorInstaller = SimulatorInstaller(simctlService: simctlService)
+        self.emulatorInstaller = EmulatorInstaller(adbService: adbService)
     }
 
     @MainActor
@@ -72,10 +77,23 @@ final class BuildListViewModel: @unchecked Sendable {
     func install(
         _ item: AppcastItem,
         for app: AppEntry,
-        on device: SimulatorDevice
+        on device: AnyDevice
     ) async throws {
         let archivePath = try await downloadManager.download(item, for: app)
-        try await installer.install(archivePath: archivePath, app: app, device: device)
+
+        switch device {
+        case .simulator(let simulator):
+            guard app.platform == .ios else {
+                throw SparkleyError.platformMismatch(expected: .ios, got: app.platform)
+            }
+            try await simulatorInstaller.install(archivePath: archivePath, app: app, device: simulator)
+
+        case .emulator(let emulator):
+            guard app.platform == .android else {
+                throw SparkleyError.platformMismatch(expected: .android, got: app.platform)
+            }
+            try await emulatorInstaller.install(archivePath: archivePath, app: app, device: emulator)
+        }
     }
 
     func isCached(_ item: AppcastItem, for app: AppEntry) async -> Bool {

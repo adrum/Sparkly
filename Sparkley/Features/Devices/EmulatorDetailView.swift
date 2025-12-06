@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct DeviceDetailView: View {
-    let device: SimulatorDevice
+struct EmulatorDetailView: View {
+    let device: EmulatorDevice
     @Bindable var viewModel: DeviceListViewModel
 
     var body: some View {
@@ -22,13 +22,13 @@ struct DeviceDetailView: View {
 
     private var deviceHeader: some View {
         HStack(spacing: 12) {
-            Image(systemName: deviceIcon)
+            Image(systemName: "flipphone")
                 .font(.system(size: 40))
-                .foregroundStyle(device.isBooted ? .green : .secondary)
+                .foregroundStyle(device.isOnline ? .green : .secondary)
                 .frame(width: 50)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(device.name)
+                Text(device.displayName)
                     .font(.headline)
 
                 Text(device.runtimeDisplayName)
@@ -46,14 +46,14 @@ struct DeviceDetailView: View {
     private var statusBadge: some View {
         HStack(spacing: 4) {
             Circle()
-                .fill(device.isBooted ? .green : .secondary)
+                .fill(device.isOnline ? .green : .secondary)
                 .frame(width: 8, height: 8)
             Text(device.state.displayName)
         }
         .font(.caption)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(device.isBooted ? Color.green.opacity(0.15) : Color.secondary.opacity(0.15))
+        .background(device.isOnline ? Color.green.opacity(0.15) : Color.secondary.opacity(0.15))
         .clipShape(Capsule())
     }
 
@@ -64,23 +64,25 @@ struct DeviceDetailView: View {
 
             Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 8) {
                 GridRow {
-                    Text("UDID")
+                    Text("Serial")
                         .foregroundStyle(.secondary)
-                    Text(device.udid)
+                    Text(device.serial)
                         .textSelection(.enabled)
                         .font(.system(.body, design: .monospaced))
                 }
 
-                GridRow {
-                    Text("Runtime")
-                        .foregroundStyle(.secondary)
-                    Text(device.runtimeDisplayName)
+                if let avdName = device.avdName {
+                    GridRow {
+                        Text("AVD Name")
+                            .foregroundStyle(.secondary)
+                        Text(avdName)
+                    }
                 }
 
                 GridRow {
-                    Text("Device Type")
+                    Text("Type")
                         .foregroundStyle(.secondary)
-                    Text(deviceTypeName)
+                    Text(device.isEmulator ? "Emulator" : "Physical Device")
                 }
 
                 GridRow {
@@ -102,64 +104,26 @@ struct DeviceDetailView: View {
                 .font(.headline)
 
             HStack(spacing: 12) {
-                if device.isBooted {
+                if device.isOnline && device.isEmulator {
                     Button {
-                        Task { await viewModel.shutdown(device) }
+                        Task { await viewModel.killEmulator(device) }
                     } label: {
-                        Label("Shutdown", systemImage: "power")
+                        Label("Kill Emulator", systemImage: "power")
                     }
                     .buttonStyle(.bordered)
-                } else {
-                    Button {
-                        Task { await viewModel.boot(device) }
-                    } label: {
-                        Label("Boot", systemImage: "power")
-                    }
-                    .buttonStyle(.borderedProminent)
                 }
-
-                Button {
-                    Task { await viewModel.openSimulatorApp() }
-                } label: {
-                    Label("Open Simulator", systemImage: "macwindow")
-                }
-                .buttonStyle(.bordered)
 
                 Spacer()
+            }
+
+            if !device.isOnline {
+                Text("Device is offline")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
             }
         }
         .padding()
         .background(.quaternary.opacity(0.5))
         .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-
-    private var deviceIcon: String {
-        let name = device.name.lowercased()
-        if name.contains("ipad") {
-            return "ipad"
-        } else if name.contains("watch") {
-            return "applewatch"
-        } else if name.contains("tv") {
-            return "appletv"
-        } else {
-            return "iphone"
-        }
-    }
-
-    private var deviceTypeName: String {
-        device.deviceTypeIdentifier
-            .replacingOccurrences(of: "com.apple.CoreSimulator.SimDeviceType.", with: "")
-            .replacingOccurrences(of: "-", with: " ")
-    }
-}
-
-extension SimulatorDevice.DeviceState {
-    var displayName: String {
-        switch self {
-        case .booted: return "Booted"
-        case .shutdown: return "Shutdown"
-        case .shuttingDown: return "Shutting Down"
-        case .unknown: return "Unknown"
-        }
     }
 }

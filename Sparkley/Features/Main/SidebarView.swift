@@ -9,13 +9,14 @@ struct SidebarView: View {
     @State private var isDevicesSectionExpanded = true
     @State private var isAppsSectionExpanded = true
 
-    private var filteredDevices: [SimulatorDevice] {
+    private var filteredDevices: [AnyDevice] {
+        let allDevices = deviceListViewModel.allDevices
         if sidebarSearchText.isEmpty {
-            return deviceListViewModel.devices
+            return allDevices
         }
-        return deviceListViewModel.devices.filter {
-            $0.name.localizedCaseInsensitiveContains(sidebarSearchText) ||
-            $0.runtimeDisplayName.localizedCaseInsensitiveContains(sidebarSearchText)
+        return allDevices.filter {
+            $0.displayName.localizedCaseInsensitiveContains(sidebarSearchText) ||
+            $0.statusText.localizedCaseInsensitiveContains(sidebarSearchText)
         }
     }
 
@@ -77,12 +78,12 @@ struct SidebarView: View {
     @ViewBuilder
     private var devicesSection: some View {
         if filteredDevices.isEmpty && !deviceListViewModel.isLoading {
-            Text(sidebarSearchText.isEmpty ? "No simulators" : "No matches")
+            Text(sidebarSearchText.isEmpty ? "No devices" : "No matches")
                 .foregroundStyle(.secondary)
                 .font(.caption)
         } else {
             ForEach(filteredDevices) { device in
-                DeviceRow(device: device)
+                UnifiedDeviceRow(device: device)
                     .tag(SidebarSelection.device(device))
                     .contextMenu {
                         deviceContextMenu(for: device)
@@ -92,7 +93,17 @@ struct SidebarView: View {
     }
 
     @ViewBuilder
-    private func deviceContextMenu(for device: SimulatorDevice) -> some View {
+    private func deviceContextMenu(for device: AnyDevice) -> some View {
+        switch device {
+        case .simulator(let sim):
+            simulatorContextMenu(for: sim)
+        case .emulator(let emu):
+            emulatorContextMenu(for: emu)
+        }
+    }
+
+    @ViewBuilder
+    private func simulatorContextMenu(for device: SimulatorDevice) -> some View {
         if device.isBooted {
             Button("Shutdown") {
                 Task { await deviceListViewModel.shutdown(device) }
@@ -114,6 +125,22 @@ struct SidebarView: View {
         Button("Copy UDID") {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(device.udid, forType: .string)
+        }
+    }
+
+    @ViewBuilder
+    private func emulatorContextMenu(for device: EmulatorDevice) -> some View {
+        if device.isOnline {
+            Button("Kill Emulator") {
+                Task { await deviceListViewModel.killEmulator(device) }
+            }
+        }
+
+        Divider()
+
+        Button("Copy Serial") {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(device.serial, forType: .string)
         }
     }
 
@@ -173,6 +200,36 @@ struct SidebarView: View {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(appWithBuilds.app.appcastURL.absoluteString, forType: .string)
         }
+    }
+}
+
+struct UnifiedDeviceRow: View {
+    let device: AnyDevice
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: device.deviceIcon)
+                .foregroundStyle(device.isReady ? .green : .secondary)
+                .frame(width: 20)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(device.displayName)
+                    .lineLimit(1)
+
+                Text(device.statusText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            if device.isReady {
+                Circle()
+                    .fill(.green)
+                    .frame(width: 8, height: 8)
+            }
+        }
+        .padding(.vertical, 2)
     }
 }
 

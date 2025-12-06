@@ -19,6 +19,9 @@ enum SparkleyError: LocalizedError {
     case noIndexConfigured
     case unsupportedPlatform(Platform)
     case fileNotFound(URL)
+    case adbNotFound
+    case emulatorNotFound(String)
+    case platformMismatch(expected: Platform, got: Platform)
 
     var errorDescription: String? {
         switch self {
@@ -66,6 +69,12 @@ enum SparkleyError: LocalizedError {
             return "\(platform.displayName) is not yet supported"
         case .fileNotFound(let url):
             return "File not found: \(url.path)"
+        case .adbNotFound:
+            return "Android Debug Bridge (adb) not found. Please install Android SDK."
+        case .emulatorNotFound(let message):
+            return "Android emulator not found: \(message)"
+        case .platformMismatch(let expected, let got):
+            return "Platform mismatch: expected \(expected.displayName), got \(got.displayName)"
         }
     }
 

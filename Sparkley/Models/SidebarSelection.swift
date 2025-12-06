@@ -1,10 +1,10 @@
 import Foundation
 
 enum SidebarSelection: Hashable, Sendable {
-    case device(SimulatorDevice)
+    case device(AnyDevice)
     case app(AppEntry)
 
-    var device: SimulatorDevice? {
+    var device: AnyDevice? {
         if case .device(let d) = self { return d }
         return nil
     }
@@ -22,5 +22,15 @@ enum SidebarSelection: Hashable, Sendable {
     var isApp: Bool {
         if case .app = self { return true }
         return false
+    }
+
+    /// Convenience for getting a SimulatorDevice if the selection is an iOS simulator
+    var simulator: SimulatorDevice? {
+        device?.simulator
+    }
+
+    /// Convenience for getting an EmulatorDevice if the selection is an Android emulator
+    var emulator: EmulatorDevice? {
+        device?.emulator
     }
 }
