@@ -1,0 +1,40 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+xcuserdata/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# Environment files (secrets)
+.env
+.env.local
+.env.*.local
+
+# Ruby
+.bundle/
+vendor/bundle/
+Gemfile.lock
+
+# CocoaPods (if used)
+Pods/
+
+# Swift Package Manager
+.build/
+Package.resolved
+
+# Sparkley build artifacts
+*.zip
+*.dmg
+*.pkg
