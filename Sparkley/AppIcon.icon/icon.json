@@ -1,0 +1,35 @@
+{
+  "fill" : "automatic",
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "sparkley_layer_sparkle.svg",
+          "name" : "sparkley_layer_sparkle"
+        },
+        {
+          "image-name" : "sparkley_layer_devices.svg",
+          "name" : "sparkley_layer_devices"
+        },
+        {
+          "image-name" : "sparkley_layer_background.svg",
+          "name" : "sparkley_layer_background"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

@@ -10,10 +10,31 @@ actor AVDManager {
         self.avdmanagerPath = avdmanager
     }
 
+    private func findAndroidHome() -> String {
+        // Check common Android SDK locations
+        let possiblePaths = [
+            "~/.android".expandingTildeInPath,
+            "~/Library/Android/sdk".expandingTildeInPath,
+            "/opt/android-sdk"
+        ]
+
+        for path in possiblePaths {
+            let emulatorPath = "\(path)/emulator/emulator"
+            let adbPath = "\(path)/platform-tools/adb"
+            if FileManager.default.fileExists(atPath: emulatorPath) ||
+               FileManager.default.fileExists(atPath: adbPath) {
+                return path
+            }
+        }
+
+        // Default fallback
+        return "~/Library/Android/sdk".expandingTildeInPath
+    }
+
     private func findPaths() -> (emulator: String?, avdmanager: String?) {
         let androidHome = ProcessInfo.processInfo.environment["ANDROID_HOME"]
             ?? ProcessInfo.processInfo.environment["ANDROID_SDK_ROOT"]
-            ?? "~/Library/Android/sdk".expandingTildeInPath
+            ?? findAndroidHome()
 
         let emulatorPath = "\(androidHome)/emulator/emulator"
         let avdmanagerPath = "\(androidHome)/cmdline-tools/latest/bin/avdmanager"
@@ -74,7 +95,7 @@ actor AVDManager {
         // Use adb to kill the emulator
         let androidHome = ProcessInfo.processInfo.environment["ANDROID_HOME"]
             ?? ProcessInfo.processInfo.environment["ANDROID_SDK_ROOT"]
-            ?? "~/Library/Android/sdk".expandingTildeInPath
+            ?? findAndroidHome()
 
         let adbPath = "\(androidHome)/platform-tools/adb"
 

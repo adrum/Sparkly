@@ -12,6 +12,7 @@ actor ADBService {
         let possiblePaths = [
             ProcessInfo.processInfo.environment["ANDROID_HOME"].map { "\($0)/platform-tools/adb" },
             ProcessInfo.processInfo.environment["ANDROID_SDK_ROOT"].map { "\($0)/platform-tools/adb" },
+            "~/.android/platform-tools/adb".expandingTildeInPath,
             "~/Library/Android/sdk/platform-tools/adb".expandingTildeInPath,
             "/usr/local/bin/adb",
             "/opt/homebrew/bin/adb"
