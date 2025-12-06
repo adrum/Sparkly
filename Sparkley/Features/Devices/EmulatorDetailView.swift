@@ -3,6 +3,14 @@ import SwiftUI
 struct EmulatorDetailView: View {
     let device: EmulatorDevice
     @Bindable var viewModel: DeviceListViewModel
+    let knownApps: [AppWithBuilds]
+
+    @State private var installedApps: [InstalledApp] = []
+    @State private var isLoadingApps = false
+
+    private func matchingAppEntry(for installedApp: InstalledApp) -> AppEntry? {
+        knownApps.first { $0.app.id == installedApp.bundleID }?.app
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,10 +22,33 @@ struct EmulatorDetailView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     deviceInfoSection
                     actionsSection
+                    if device.isOnline {
+                        installedAppsSection
+                    }
                 }
                 .padding()
             }
         }
+        .task(id: device.serial) {
+            await loadInstalledApps()
+        }
+        .onChange(of: device.isOnline) { _, isOnline in
+            if isOnline {
+                Task { await loadInstalledApps() }
+            } else {
+                installedApps = []
+            }
+        }
+    }
+
+    private func loadInstalledApps() async {
+        guard device.isOnline else {
+            installedApps = []
+            return
+        }
+        isLoadingApps = true
+        installedApps = await viewModel.listInstalledApps(on: .emulator(device))
+        isLoadingApps = false
     }
 
     private var deviceHeader: some View {
@@ -120,6 +151,54 @@ struct EmulatorDetailView: View {
                 Text("Device is offline")
                     .foregroundStyle(.secondary)
                     .font(.caption)
+            }
+        }
+        .padding()
+        .background(.quaternary.opacity(0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private var installedAppsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Installed Apps")
+                    .font(.headline)
+
+                Spacer()
+
+                Button {
+                    Task { await loadInstalledApps() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .buttonStyle(.borderless)
+                .disabled(isLoadingApps)
+            }
+
+            if isLoadingApps {
+                HStack {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Loading apps...")
+                        .foregroundStyle(.secondary)
+                }
+            } else if installedApps.isEmpty {
+                Text("No third-party apps installed")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
+            } else {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 8) {
+                    ForEach(installedApps) { app in
+                        InstalledAppRow(
+                            app: app,
+                            matchingEntry: matchingAppEntry(for: app)
+                        ) {
+                            Task {
+                                await viewModel.launchApp(app, on: .emulator(device))
+                            }
+                        }
+                    }
+                }
             }
         }
         .padding()

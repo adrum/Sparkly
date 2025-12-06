@@ -40,7 +40,7 @@ struct MainView: View {
         .task {
             await configureAndLoad()
         }
-        .onChange(of: settingsViewModel.indexURLString) { _, _ in
+        .onChange(of: settingsViewModel.indexSources) { _, _ in
             Task {
                 await configureAndLoad()
             }
@@ -70,12 +70,14 @@ struct MainView: View {
             case .simulator(let device):
                 SimulatorDetailView(
                     device: device,
-                    viewModel: deviceListViewModel
+                    viewModel: deviceListViewModel,
+                    knownApps: buildListViewModel.apps
                 )
             case .emulator(let device):
                 EmulatorDetailView(
                     device: device,
-                    viewModel: deviceListViewModel
+                    viewModel: deviceListViewModel,
+                    knownApps: buildListViewModel.apps
                 )
             }
         case .app:
@@ -106,11 +108,11 @@ struct MainView: View {
         .disabled(buildListViewModel.isLoading)
 
         Picker("Platform", selection: $buildListViewModel.platformFilter) {
-            Text("All Platforms").tag(Optional<Platform>.none)
+            Text("All Platforms").tag(nil as Platform?)
             Divider()
             ForEach(Platform.allCases) { platform in
                 Label(platform.displayName, systemImage: platform.systemImage)
-                    .tag(Optional(platform))
+                    .tag(platform as Platform?)
             }
         }
         .pickerStyle(.menu)
@@ -133,8 +135,9 @@ struct MainView: View {
             sidebarSelection = .device(firstDevice)
         }
 
-        if let indexURL = settingsViewModel.indexURL {
-            await indexService.configure(indexURL: indexURL)
+        let indexURLs = settingsViewModel.enabledIndexURLs
+        if !indexURLs.isEmpty {
+            await indexService.configure(indexURLs: indexURLs)
             await buildListViewModel.refresh()
 
             // If we have apps but nothing selected, select first app

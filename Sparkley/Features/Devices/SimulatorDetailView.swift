@@ -3,6 +3,14 @@ import SwiftUI
 struct SimulatorDetailView: View {
     let device: SimulatorDevice
     @Bindable var viewModel: DeviceListViewModel
+    let knownApps: [AppWithBuilds]
+
+    @State private var installedApps: [InstalledApp] = []
+    @State private var isLoadingApps = false
+
+    private func matchingAppEntry(for installedApp: InstalledApp) -> AppEntry? {
+        knownApps.first { $0.app.id == installedApp.bundleID }?.app
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,10 +22,33 @@ struct SimulatorDetailView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     deviceInfoSection
                     actionsSection
+                    if device.isBooted {
+                        installedAppsSection
+                    }
                 }
                 .padding()
             }
         }
+        .task(id: device.udid) {
+            await loadInstalledApps()
+        }
+        .onChange(of: device.isBooted) { _, isBooted in
+            if isBooted {
+                Task { await loadInstalledApps() }
+            } else {
+                installedApps = []
+            }
+        }
+    }
+
+    private func loadInstalledApps() async {
+        guard device.isBooted else {
+            installedApps = []
+            return
+        }
+        isLoadingApps = true
+        installedApps = await viewModel.listInstalledApps(on: .simulator(device))
+        isLoadingApps = false
     }
 
     private var deviceHeader: some View {
@@ -133,6 +164,54 @@ struct SimulatorDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
+    private var installedAppsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Installed Apps")
+                    .font(.headline)
+
+                Spacer()
+
+                Button {
+                    Task { await loadInstalledApps() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .buttonStyle(.borderless)
+                .disabled(isLoadingApps)
+            }
+
+            if isLoadingApps {
+                HStack {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Loading apps...")
+                        .foregroundStyle(.secondary)
+                }
+            } else if installedApps.isEmpty {
+                Text("No third-party apps installed")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
+            } else {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200))], spacing: 8) {
+                    ForEach(installedApps) { app in
+                        InstalledAppRow(
+                            app: app,
+                            matchingEntry: matchingAppEntry(for: app)
+                        ) {
+                            Task {
+                                await viewModel.launchApp(app, on: .simulator(device))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(.quaternary.opacity(0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
     private var deviceIcon: String {
         let name = device.name.lowercased()
         if name.contains("ipad") {
@@ -161,5 +240,72 @@ extension SimulatorDevice.DeviceState {
         case .shuttingDown: return "Shutting Down"
         case .unknown: return "Unknown"
         }
+    }
+}
+
+struct InstalledAppRow: View {
+    let app: InstalledApp
+    let matchingEntry: AppEntry?
+    let onLaunch: () -> Void
+
+    private var displayName: String {
+        matchingEntry?.name ?? app.displayName
+    }
+
+    private var hasMatch: Bool {
+        matchingEntry != nil
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if let iconURL = matchingEntry?.icon {
+                AsyncImageView(url: iconURL, size: 32)
+            } else {
+                Image(systemName: app.platform == .ios ? "app.fill" : "play.rectangle.fill")
+                    .font(.system(size: 20))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 32, height: 32)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Text(displayName)
+                        .lineLimit(1)
+                        .font(.subheadline)
+                        .fontWeight(hasMatch ? .medium : .regular)
+
+                    if hasMatch {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.blue)
+                            .help("App from your library")
+                    }
+                }
+
+                Text(app.bundleID)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Button {
+                onLaunch()
+            } label: {
+                Image(systemName: "play.fill")
+                    .font(.caption)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
+        .padding(8)
+        .background(hasMatch ? Color.blue.opacity(0.05) : Color.clear)
+        .background(.background)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .strokeBorder(hasMatch ? Color.blue.opacity(0.2) : Color.clear, lineWidth: 1)
+        )
     }
 }
