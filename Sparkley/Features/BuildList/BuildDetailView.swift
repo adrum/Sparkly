@@ -61,7 +61,7 @@ struct BuildDetailView: View {
 
     private var platformBadge: some View {
         HStack(spacing: 4) {
-            Image(systemName: app.platform == .ios ? "iphone" : "android")
+            Image(systemName: app.platform.systemImage)
             Text(app.platform.displayName)
         }
         .font(.caption)
