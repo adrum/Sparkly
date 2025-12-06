@@ -31,6 +31,7 @@
 		D9A4E0C32EE49B740075DD55 /* Sparkley.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sparkley.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9A4E0D02EE49B750075DD55 /* SparkleyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SparkleyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9A4E0DA2EE49B750075DD55 /* SparkleyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SparkleyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D9A4E5002EE500000075DD55 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -80,6 +81,7 @@
 		D9A4E0BA2EE49B740075DD55 = {
 			isa = PBXGroup;
 			children = (
+				D9A4E5012EE500010075DD55 /* Configuration */,
 				D9A4E0C52EE49B740075DD55 /* Sparkley */,
 				D9A4E0D32EE49B750075DD55 /* SparkleyTests */,
 				D9A4E0DD2EE49B750075DD55 /* SparkleyUITests */,
@@ -95,6 +97,14 @@
 				D9A4E0DA2EE49B750075DD55 /* SparkleyUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		D9A4E5012EE500010075DD55 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				D9A4E5002EE500000075DD55 /* Base.xcconfig */,
+			);
+			path = "Sparkley/Configuration";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -398,6 +408,7 @@
 		};
 		D9A4E0E52EE49B750075DD55 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D9A4E5002EE500000075DD55 /* Base.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -428,6 +439,7 @@
 		};
 		D9A4E0E62EE49B750075DD55 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D9A4E5002EE500000075DD55 /* Base.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

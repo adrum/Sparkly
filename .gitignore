@@ -5,6 +5,9 @@ DerivedData/
 *.xcscmblueprint
 xcuserdata/
 
+# Local xcconfig (contains Team ID and signing settings)
+Local.xcconfig
+
 # macOS
 .DS_Store
 .AppleDouble

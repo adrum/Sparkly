@@ -1,0 +1,11 @@
+// Base configuration for Sparkley
+// This file is checked into version control
+
+// Include local overrides if they exist (for team ID, signing, etc.)
+#include? "Local.xcconfig"
+
+// Deployment target
+MACOSX_DEPLOYMENT_TARGET = 14.0
+
+// Swift settings
+SWIFT_VERSION = 6.0

@@ -1,0 +1,17 @@
+// Local configuration overrides (NOT checked into version control)
+// Copy this file to Local.xcconfig and fill in your values
+
+// Your Apple Developer Team ID
+// Find at: https://developer.apple.com/account -> Membership -> Team ID
+DEVELOPMENT_TEAM = XXXXXXXXXX
+
+// Code signing identity (optional, for Developer ID builds)
+// CODE_SIGN_IDENTITY = Apple Development
+// CODE_SIGN_IDENTITY = Developer ID Application
+
+// For automatic signing, just set DEVELOPMENT_TEAM and use:
+// CODE_SIGN_STYLE = Automatic
+
+// For manual signing:
+// CODE_SIGN_STYLE = Manual
+// PROVISIONING_PROFILE_SPECIFIER = Your Profile Name
