@@ -15,3 +15,13 @@ DEVELOPMENT_TEAM = XXXXXXXXXX
 // For manual signing:
 // CODE_SIGN_STYLE = Manual
 // PROVISIONING_PROFILE_SPECIFIER = Your Profile Name
+
+// Sparkle update feed URL
+// This is where your appcast.xml is hosted
+// Note: Use $()/() to prevent // from being treated as a comment in xcconfig
+SPARKLE_FEED_URL = https:/$()/raw.githubusercontent.com/username/repo/main/appcast.xml
+
+// Sparkle EdDSA public key for verifying updates
+// Generate with: ./Sparkle.framework/bin/generate_keys
+// This outputs a public key to add here and a private key to keep secret
+SPARKLE_PUBLIC_KEY = YOUR_ED25519_PUBLIC_KEY

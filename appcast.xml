@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Sparkly</title>
+        <item>
+            <title>1.0</title>
+            <pubDate>Sun, 07 Dec 2025 00:42:41 -0500</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://raw.githubusercontent.com/adrum/Sparkly/main/Sparkly-1.0.zip" length="4648578" type="application/octet-stream" sparkle:edSignature="/vg/SufBCsB8pLPU+JW06vyOzV04YTtUaOsHDgp7qACpHWB6INL50AOClEAhLBY2b0HkG7SOi2kEP1HBu7tjDQ=="/>
+        </item>
+    </channel>
+</rss>

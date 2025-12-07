@@ -280,6 +280,50 @@ platform :mac do
     UI.success("Bumped to version #{version} (#{build_number})")
   end
 
+  desc "Generate Sparkle appcast from releases"
+  lane :generate_appcast do
+    # SPARKLE_PRIVATE_KEY env var is optional - falls back to Keychain
+
+    # Create clean appcast directory (absolute path)
+    appcast_dir = File.expand_path("../appcast_artifacts")
+    sh("rm -rf '#{appcast_dir}'")
+    sh("mkdir -p '#{appcast_dir}'")
+
+    # Download latest release zip from GitHub
+    version = get_version_number(xcodeproj: xcodeproj, target: target)
+    zip_name = "#{app_name}-#{version}.zip"
+    download_url = "https://github.com/#{github_repository}/releases/download/v#{version}/#{zip_name}"
+
+    UI.message("Downloading #{zip_name} from GitHub releases...")
+    sh("curl -L -o '#{appcast_dir}/#{zip_name}' '#{download_url}'")
+
+    # Find generate_appcast from Xcode's resolved SPM package
+    derived_data = File.expand_path("~/Library/Developer/Xcode/DerivedData")
+    sparkle_bin = Dir.glob("#{derived_data}/#{app_name}-*/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast").first
+
+    unless sparkle_bin && File.exist?(sparkle_bin)
+      UI.user_error!("generate_appcast not found in DerivedData. Build the project in Xcode first to resolve SPM packages.")
+    end
+
+    UI.message("Generating appcast... #{sparkle_bin} #{appcast_dir}")
+
+    # Use key from Keychain (default) or pipe from env var
+    if ENV["SPARKLE_PRIVATE_KEY"]
+      sh("echo \"$SPARKLE_PRIVATE_KEY\" | '#{sparkle_bin}' --ed-key-file - '#{appcast_dir}'")
+    else
+      # Fall back to Keychain
+      sh("'#{sparkle_bin}' '#{appcast_dir}'")
+    end
+
+    # Copy generated appcast to repo root
+    sh("cp '#{appcast_dir}/appcast.xml' ../appcast.xml")
+
+    # Cleanup
+    sh("rm -rf '#{appcast_dir}'")
+
+    UI.success("Generated appcast.xml")
+  end
+
   # Helper to publish to GitHub
   def publish_to_github(version:, tag_name:, release_name:, is_draft:, is_prerelease:)
     existing_release = get_github_release(

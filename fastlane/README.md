@@ -95,6 +95,14 @@ Create a signed draft release
 
 Bump version number
 
+### mac generate_appcast
+
+```sh
+[bundle exec] fastlane mac generate_appcast
+```
+
+Generate Sparkle appcast from releases
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
