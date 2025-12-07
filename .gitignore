@@ -25,6 +25,10 @@ fastlane/test_output/
 *.local*
 !.env.example
 
+# App Store Connect API Key
+api_key.json
+fastlane/api_key.json
+
 # Ruby
 .bundle/
 vendor/bundle/
