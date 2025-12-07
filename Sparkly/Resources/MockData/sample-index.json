@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "title": "Development Builds",
+  "apps": [
+    {
+      "id": "com.example.demoapp",
+      "name": "Demo App",
+      "icon": null,
+      "platform": "ios",
+      "appcastURL": "file:///Users/austin/Developer/GitHub/Sparkly/Sparkly/Resources/MockData/sample-appcast.xml"
+    },
+    {
+      "id": "com.example.otherapp",
+      "name": "Other App",
+      "icon": null,
+      "platform": "ios",
+      "appcastURL": "file:///Users/austin/Developer/GitHub/Sparkly/Sparkly/Resources/MockData/sample-appcast.xml"
+    },
+    {
+      "id": "com.example.demoapp.android",
+      "name": "Demo App",
+      "icon": null,
+      "platform": "android",
+      "appcastURL": "file:///Users/austin/Developer/GitHub/Sparkly/Sparkly/Resources/MockData/sample-appcast-android.xml"
+    }
+  ]
+}

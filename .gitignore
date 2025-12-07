@@ -41,7 +41,7 @@ Pods/
 .build/
 Package.resolved
 
-# Sparkley build artifacts
+# Sparkly build artifacts
 *.zip
 *.dmg
 *.pkg

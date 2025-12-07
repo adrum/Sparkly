@@ -1,12 +1,12 @@
-# Sparkley
+# Sparkly
 
 A native macOS app for distributing and installing development builds to iOS Simulators and Android Emulators. Think "Sparkle for simulators" — a polished update client for your team's internal builds.
 
-## Why Sparkley?
+## Why Sparkly?
 
-Building mobile apps means constantly testing new builds across different devices. Sparkley streamlines this workflow for development teams by:
+Building mobile apps means constantly testing new builds across different devices. Sparkly streamlines this workflow for development teams by:
 
-- **Centralizing build distribution** — Host your builds anywhere (S3, internal servers, GitHub releases) and let Sparkley handle discovery and installation
+- **Centralizing build distribution** — Host your builds anywhere (S3, internal servers, GitHub releases) and let Sparkly handle discovery and installation
 - **Supporting both platforms** — iOS Simulators and Android Emulators in one unified interface
 - **Leveraging existing infrastructure** — Uses the battle-tested [Sparkle appcast format](https://sparkle-project.org/documentation/publishing/) that many teams already use
 - **Zero configuration for developers** — Once your team sets up a feed, developers just add the URL and go
@@ -15,20 +15,20 @@ Building mobile apps means constantly testing new builds across different device
 
 ### For Developers
 
-1. Download Sparkley from [Releases](https://github.com/adrum/Sparkley/releases)
+1. Download Sparkly from [Releases](https://github.com/adrum/Sparkly/releases)
 2. Open **Settings** (⌘,) and add your team's index URL
 3. Browse available builds in the sidebar and install with one click
 
 ### For Teams Setting Up Distribution
 
-Setting up Sparkley for your team involves two steps:
+Setting up Sparkly for your team involves two steps:
 
 1. Create appcast feeds for each app (standard Sparkle format)
-2. Create a Sparkley index file that points to your appcasts
+2. Create a Sparkly index file that points to your appcasts
 
-## Creating a Sparkley Index
+## Creating a Sparkly Index
 
-The Sparkley index is a simple JSON file that lists your apps and their appcast URLs:
+The Sparkly index is a simple JSON file that lists your apps and their appcast URLs:
 
 ```json
 {
@@ -80,7 +80,7 @@ The Sparkley index is a simple JSON file that lists your apps and their appcast 
 
 ## Creating Appcasts
 
-Sparkley uses the standard [Sparkle appcast format](https://sparkle-project.org/documentation/publishing/). Here's an example:
+Sparkly uses the standard [Sparkle appcast format](https://sparkle-project.org/documentation/publishing/). Here's an example:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -147,7 +147,7 @@ Your index and appcast files can be hosted anywhere accessible via HTTP/HTTPS.
 
 ```
 your-builds-repo/
-├── sparkley-index.json      # Your Sparkley index
+├── sparkley-index.json      # Your Sparkly index
 ├── ios-app/
 │   ├── appcast.xml          # iOS appcast
 │   └── builds/
@@ -168,7 +168,7 @@ https://your-org.github.io/your-builds-repo/sparkley-index.json
 
 ## Multiple Index Sources
 
-Sparkley supports multiple index sources, useful for:
+Sparkly supports multiple index sources, useful for:
 
 - **Personal builds** alongside team builds
 - **Multiple teams** within an organization
@@ -195,9 +195,9 @@ Add multiple sources in **Settings → Index Sources**. Apps from all enabled so
 ## Building from Source
 
 ```bash
-git clone https://github.com/adrum/Sparkley.git
-cd Sparkley
-open Sparkley.xcodeproj
+git clone https://github.com/adrum/Sparkly.git
+cd Sparkly
+open Sparkly.xcodeproj
 ```
 
 Build and run with ⌘R.

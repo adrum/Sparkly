@@ -1,10 +1,10 @@
-# Sparkley
+# Sparkly
 
 A native macOS app for managing and installing simulator/emulator builds. Think "Sparkle for simulators" — a polished, native update client for development builds targeting iOS Simulators and Android Emulators.
 
 ## Project Overview
 
-Sparkley connects to a JSON index file containing references to Sparkle-format appcast feeds, fetches available builds, downloads/caches them locally, and installs them into iOS Simulators or Android Emulators. It also provides basic device management: launching, booting, and monitoring simulators and emulators.
+Sparkly connects to a JSON index file containing references to Sparkle-format appcast feeds, fetches available builds, downloads/caches them locally, and installs them into iOS Simulators or Android Emulators. It also provides basic device management: launching, booting, and monitoring simulators and emulators.
 
 ## Tech Stack
 
@@ -18,9 +18,9 @@ Sparkley connects to a JSON index file containing references to Sparkle-format a
 ## Project Structure
 
 ```
-Sparkley/
+Sparkly/
 ├── App/
-│   ├── SparkleyApp.swift         # App entry point
+│   ├── SparklyApp.swift         # App entry point
 │   └── AppDelegate.swift         # Menu bar, lifecycle hooks
 ├── Features/
 │   ├── BuildList/                # Remote build browsing
@@ -70,7 +70,7 @@ Sparkley/
 
 ## Feed Architecture
 
-### Sparkley Index Format (JSON)
+### Sparkly Index Format (JSON)
 
 A proprietary JSON index file that lists apps and their appcast URLs:
 
@@ -129,7 +129,7 @@ enum Platform: String, Codable, Sendable {
 
 ### Sparkle Appcast Format (XML)
 
-Each app has a standard Sparkle appcast feed. Sparkley parses these to get available builds:
+Each app has a standard Sparkle appcast feed. Sparkly parses these to get available builds:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -183,7 +183,7 @@ final class AppcastParser: NSObject, XMLParserDelegate, Sendable {
         parser.delegate = self
         
         guard parser.parse() else {
-            throw SparkleyError.appcastParsingFailed(parser.parserError)
+            throw SparklyError.appcastParsingFailed(parser.parserError)
         }
         
         return items
@@ -442,7 +442,7 @@ struct InstallationService {
             try await adb.install(serial: emulator.serial, apkPath: installablePath)
             
         default:
-            throw SparkleyError.unsupportedDevice
+            throw SparklyError.unsupportedDevice
         }
     }
     
@@ -473,7 +473,7 @@ struct InstallationService {
 ### Error Handling
 
 ```swift
-enum SparkleyError: LocalizedError {
+enum SparklyError: LocalizedError {
     case indexFetchFailed(underlying: Error)
     case appcastParsingFailed(Error?)
     case simulatorNotFound(String)
@@ -504,7 +504,7 @@ Use `@Environment` for shared services:
 
 ```swift
 @main
-struct SparkleyApp: App {
+struct SparklyApp: App {
     @State private var indexService = AppIndexService(
         indexURL: URL(string: "https://builds.example.com/sparkley-index.json")!
     )
@@ -519,7 +519,7 @@ struct SparkleyApp: App {
                 .environment(deviceManager)
         }
         .commands {
-            SparkleyCommands()
+            SparklyCommands()
         }
         
         Settings {
@@ -609,20 +609,20 @@ func shell(_ args: String...) async throws -> Data {
 
 ```bash
 # Build
-xcodebuild -scheme Sparkley -configuration Debug build
+xcodebuild -scheme Sparkly -configuration Debug build
 
 # Run tests
-xcodebuild -scheme Sparkley -configuration Debug test
+xcodebuild -scheme Sparkly -configuration Debug test
 
 # Archive for distribution
-xcodebuild -scheme Sparkley -configuration Release archive
+xcodebuild -scheme Sparkly -configuration Release archive
 ```
 
 ## Dependencies
 
 Prefer minimal dependencies. If needed:
 
-- **Sparkle** — For self-updates of Sparkley itself (dogfooding!)
+- **Sparkle** — For self-updates of Sparkly itself (dogfooding!)
 - **KeychainAccess** — If storing credentials for authenticated index URLs
 
 Add via Swift Package Manager in Xcode.
@@ -650,8 +650,8 @@ Add via Swift Package Manager in Xcode.
 
 Settings should allow:
 
-- **Index URL:** The URL to the Sparkley index JSON file
-- **Cache Location:** Where to store downloaded builds (default: `~/Library/Caches/Sparkley`)
+- **Index URL:** The URL to the Sparkly index JSON file
+- **Cache Location:** Where to store downloaded builds (default: `~/Library/Caches/Sparkly`)
 - **Cache Size Limit:** Maximum disk space for cached builds
 - **Android SDK Path:** Override path to Android SDK
 - **Auto-refresh Interval:** How often to poll for updates (or disable)
