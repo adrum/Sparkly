@@ -1,6 +1,6 @@
 # App identifier and Apple ID
-# app_identifier("com.austindrummond.Sparkley")
-# apple_id(ENV["APPLE_ID"])
+app_identifier(ENV["APP_IDENTIFIER"])
+apple_id(ENV["APPLE_ID"])
 
 # For GitHub releases
 # No App Store configuration needed for direct distribution

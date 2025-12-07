@@ -2,41 +2,47 @@ default_platform(:mac)
 
 # Configuration via environment variables
 #
-# App Configuration:
-#   APP_NAME          - App name (e.g., "Sparkley")
-#   XCODEPROJ         - Xcode project file (e.g., "Sparkley.xcodeproj")
-#   SCHEME            - Build scheme (e.g., "Sparkley")
-#   TARGET            - Build target (defaults to APP_NAME)
-#   GITHUB_REPOSITORY - GitHub repo (e.g., "adrum/Sparkley")
-#   MACOS_MIN_VERSION - Minimum macOS version for release notes (default: "14.0")
+# App Configuration (required):
+#   APP_NAME                   - App name (e.g., "MyApp")
+#   XCODEPROJ                  - Xcode project file (e.g., "MyApp.xcodeproj")
+#   SCHEME                     - Build scheme (e.g., "MyApp")
+#   TARGET                     - Build target (e.g., "MyApp")
+#   GITHUB_REPOSITORY          - GitHub repo (e.g., "username/repo")
+#   DEVELOPER_ID_APPLICATION   - Signing identity (e.g., "Developer ID Application: Name (TEAMID)")
+#
+# Optional:
+#   MACOS_MIN_VERSION          - Minimum macOS version for release notes (default: "14.0")
+#   ASC_API_KEY_PATH           - Path to api_key.json file (default: "api_key.json")
 #
 # GitHub (required for releases):
-#   GITHUB_TOKEN      - GitHub Personal Access Token
+#   GITHUB_TOKEN               - GitHub Personal Access Token
 #
-# Notarization via App Store Connect API Key (recommended):
-#   ASC_API_KEY_PATH  - Path to api_key.json file (default: fastlane/api_key.json)
-#
-# Code Signing:
-#   DEVELOPER_ID_APPLICATION - Signing identity (e.g., "Developer ID Application: Name (TEAMID)")
+# Match (required for signed builds):
+#   MATCH_GIT_URL              - Git repo for certificates
+#   MATCH_PASSWORD             - Password to decrypt certificates
 
 def app_name
-  ENV["APP_NAME"] || "Sparkley"
+  ENV.fetch("APP_NAME")
 end
 
 def xcodeproj
-  ENV["XCODEPROJ"] || "#{app_name}.xcodeproj"
+  ENV.fetch("XCODEPROJ")
 end
 
 def scheme
-  ENV["SCHEME"] || app_name
+  ENV.fetch("SCHEME")
 end
 
 def target
-  ENV["TARGET"] || app_name
+  ENV.fetch("TARGET")
 end
 
 def github_repository
-  ENV["GITHUB_REPOSITORY"] || "adrum/#{app_name}"
+  ENV.fetch("GITHUB_REPOSITORY")
+end
+
+def developer_id_identity
+  ENV["DEVELOPER_ID_APPLICATION"]
 end
 
 def macos_min_version
@@ -44,7 +50,7 @@ def macos_min_version
 end
 
 def asc_api_key_path
-  ENV["ASC_API_KEY_PATH"] || "fastlane/api_key.json"
+  ENV["ASC_API_KEY_PATH"] || "api_key.json"
 end
 
 def load_asc_api_key
@@ -61,31 +67,51 @@ def load_asc_api_key
                    "}")
   end
 
+  # Load JSON and pass individual parameters
+  key_json = JSON.parse(File.read(key_path))
+
   app_store_connect_api_key(
-    key_filepath: key_path
+    key_id: key_json["key_id"],
+    issuer_id: key_json["issuer_id"],
+    key_content: key_json["key"]
   )
 end
 
 platform :mac do
   desc "Build and sign the macOS app with Developer ID"
   lane :build_signed do
-    ensure_env_vars(
-      env_vars: ["DEVELOPER_ID_APPLICATION"]
-    )
-
     sh("rm -rf ../build")
 
-    build_mac_app(
+    # Sync cert from match
+    match
+
+    identity = developer_id_identity
+    UI.message("Signing with: #{identity}")
+
+    # Build without signing first
+    xcodebuild(
       scheme: scheme,
       project: xcodeproj,
-      output_directory: "./build",
-      output_name: "#{app_name}.app",
-      export_method: "developer-id",
-      skip_package_pkg: true,
-      clean: true,
       configuration: "Release",
-      codesigning_identity: ENV["DEVELOPER_ID_APPLICATION"]
+      derivedDataPath: "./build/DerivedData",
+      xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -destination 'generic/platform=macOS'"
     )
+
+    # Copy the app to build directory
+    sh("mkdir -p ../build")
+    sh("cp -R '../build/DerivedData/Build/Products/Release/#{app_name}.app' ../build/")
+
+    # Sign all nested code recursively, then the app bundle
+    UI.message("Signing app with Developer ID: #{identity}")
+    app_path = "../build/#{app_name}.app"
+
+    # Sign standalone executables inside frameworks (not bundles)
+    sh("find '#{app_path}' -type f -perm +111 -path '*/Frameworks/*.framework/*' ! -name '.*' -exec codesign --force --timestamp --options runtime --sign '#{identity}' {} \\;")
+
+    # Sign all bundles (frameworks, apps, xpc) from deepest to shallowest
+    sh("find '#{app_path}' -depth -type d \\( -name '*.framework' -o -name '*.app' -o -name '*.xpc' \\) -exec codesign --force --timestamp --options runtime --sign '#{identity}' {} \\;")
+
+    UI.success("App signed with Developer ID")
   end
 
   desc "Build without signing (for testing)"
@@ -107,7 +133,7 @@ platform :mac do
   desc "Notarize the app with Apple using App Store Connect API"
   lane :notarize_app do
     api_key = load_asc_api_key
-    app_path = "../build/#{app_name}.app"
+    app_path = "build/#{app_name}.app"
 
     UI.message("Submitting for notarization...")
 
@@ -167,7 +193,7 @@ platform :mac do
   desc "Build, sign, notarize, and release to GitHub"
   lane :release_signed do |options|
     ensure_env_vars(
-      env_vars: ["GITHUB_TOKEN", "DEVELOPER_ID_APPLICATION"]
+      env_vars: ["GITHUB_TOKEN"]
     )
 
     version = get_version_number(xcodeproj: xcodeproj, target: target)
@@ -216,7 +242,7 @@ platform :mac do
   desc "Create a signed draft release"
   lane :release_draft_signed do
     ensure_env_vars(
-      env_vars: ["GITHUB_TOKEN", "DEVELOPER_ID_APPLICATION"]
+      env_vars: ["GITHUB_TOKEN"]
     )
 
     version = get_version_number(xcodeproj: xcodeproj, target: target)

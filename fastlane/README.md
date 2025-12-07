@@ -1,122 +1,104 @@
-# Fastlane Setup for Sparkley
+fastlane documentation
+----
 
-This directory contains Fastlane configuration for building and releasing Sparkley.
+# Installation
 
-## Setup
+Make sure you have the latest version of the Xcode command line tools installed:
 
-1. Install Ruby dependencies:
-
-```bash
-bundle install
+```sh
+xcode-select --install
 ```
 
-2. Copy the environment template and add your secrets:
+For _fastlane_ installation instructions, see [Installing _fastlane_](https://docs.fastlane.tools/#installing-fastlane)
 
-```bash
-cp .env.example .env
+# Available Actions
+
+## Mac
+
+### mac build_signed
+
+```sh
+[bundle exec] fastlane mac build_signed
 ```
 
-3. Edit `.env` and add your GitHub Personal Access Token:
-   - Go to https://github.com/settings/tokens
-   - Create a token with `repo` or `public_repo` scope
-   - Add it to `.env` as `GITHUB_TOKEN`
+Build and sign the macOS app with Developer ID
 
-## Available Lanes
+### mac build_unsigned
 
-### Build
-
-```bash
-# Build without code signing (for testing/CI)
-bundle exec fastlane build_unsigned
-
-# Build with Developer ID signing (requires Apple Developer account)
-bundle exec fastlane build
+```sh
+[bundle exec] fastlane mac build_unsigned
 ```
 
-### Archive
+Build without signing (for testing)
 
-```bash
-# Create a zip archive of the built app
-bundle exec fastlane archive
+### mac notarize_app
+
+```sh
+[bundle exec] fastlane mac notarize_app
 ```
 
-### Release
+Notarize the app with Apple using App Store Connect API
 
-```bash
-# Build and create a GitHub release
-bundle exec fastlane release
+### mac build_notarized
 
-# Create a draft release (won't be public until you publish it)
-bundle exec fastlane release_draft
-
-# Create a prerelease
-bundle exec fastlane release prerelease:true
+```sh
+[bundle exec] fastlane mac build_notarized
 ```
 
-### Version Management
+Build, sign, and notarize the app
 
-```bash
-# Bump patch version (1.0.0 -> 1.0.1)
-bundle exec fastlane bump type:patch
+### mac archive
 
-# Bump minor version (1.0.0 -> 1.1.0)
-bundle exec fastlane bump type:minor
-
-# Bump major version (1.0.0 -> 2.0.0)
-bundle exec fastlane bump type:major
+```sh
+[bundle exec] fastlane mac archive
 ```
 
-## CI/CD Integration
+Create a zip archive of the app
 
-### GitHub Actions Example
+### mac release
 
-```yaml
-name: Release
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  release:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app
-
-      - name: Build and Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bundle exec fastlane release
+```sh
+[bundle exec] fastlane mac release
 ```
 
-## Code Signing (Optional)
+Build, archive, and release UNSIGNED to GitHub
 
-For distributing signed builds outside the App Store, you need:
+### mac release_signed
 
-1. An Apple Developer account ($99/year)
-2. A "Developer ID Application" certificate
-3. Export the certificate and add to your keychain
-
-Then update your `.env`:
-
-```
-DEVELOPER_ID_APPLICATION="Developer ID Application: Your Name (TEAMID)"
+```sh
+[bundle exec] fastlane mac release_signed
 ```
 
-And use `bundle exec fastlane build` instead of `build_unsigned`.
+Build, sign, notarize, and release to GitHub
 
-## Notes
+### mac release_draft
 
-- The `build_unsigned` lane creates a functional app that runs on your Mac but shows a security warning on first launch
-- For distribution to others, consider signing with Developer ID or distributing via the App Store
-- GitHub releases are created with the version number from the Xcode project
+```sh
+[bundle exec] fastlane mac release_draft
+```
+
+Create a draft release (unsigned)
+
+### mac release_draft_signed
+
+```sh
+[bundle exec] fastlane mac release_draft_signed
+```
+
+Create a signed draft release
+
+### mac bump
+
+```sh
+[bundle exec] fastlane mac bump
+```
+
+Bump version number
+
+----
+
+This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
+
+More information about _fastlane_ can be found on [fastlane.tools](https://fastlane.tools).
+
+The documentation of _fastlane_ can be found on [docs.fastlane.tools](https://docs.fastlane.tools).
